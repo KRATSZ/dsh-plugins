@@ -1,11 +1,20 @@
 /**
  * /api/dsh-research-mode/config — the composer control's read/write path.
  *
- * Why a plugin-owned route instead of the settings RPC: the harness `settings.*`
- * wire only exposes forms on a hard-coded allowlist, and a plugin cannot widen
- * it. The roster row's Config IS projected as a volatile form host-side (see
- * `../lib/config.js` and `../lib/index.js`), so this plugin serves its own
- * loopback-only endpoint that reads and writes it through the settings service.
+ * Why a plugin-owned route instead of the settings RPC: the route is
+ * loopback-only, so a width write never travels over a remote connection.
+ *
+ * That was not the original reason. On dsh 0.1 the `settings.*` wire exposed only
+ * an allowlisted set of namespaces and a plugin could not widen it, so there was
+ * no alternative. On 0.2 that constraint is gone — forms are keyed by profile
+ * entry id and every registered one is described — and
+ * `ctx.remote.settings.update(RESEARCH_ENTRY_ID, …)` would do the same job from
+ * the browser half. Collapsing this route into that call is a deliberate change
+ * to keep loopback-only writes, not a mechanical simplification.
+ *
+ * Either way the roster row's Config is projected as a volatile form host-side
+ * (see `../lib/config.js` and `../lib/index.js`), and this endpoint reads and
+ * writes that same form through the settings service.
  *
  *   GET  /api/dsh-research-mode/config -> view (value/base/user/writable/revision)
  *   POST /api/dsh-research-mode/config -> { width } applies a validated write and

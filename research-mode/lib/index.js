@@ -65,10 +65,13 @@ export { RESEARCH_SCRIPT } from './script.js';
 /**
  * Install the mode: the settings page policy and the route the composer control
  * uses to move the width pin.
+ *
+ * Takes no config. The row's `width` is not read here — the settings service
+ * projects it straight off this plugin's `Config`, and the agent half reads the
+ * live value at call time.
  * @param ctx - host plugin context.
- * @param config - the roster row's config; `{ width }`, where 0 means "no pin".
  */
-export function apply(ctx, config) {
+export function apply(ctx) {
 	// The pinned width. dsh's settings service projects this row's Config
 	// (`./config.js`, where `width` is `.volatile()`) as a form keyed by the
 	// profile entry id, so a write persists into the profile patch and the AGENT

@@ -71,14 +71,16 @@ layer, or edit it through the Web editor, which rewrites `config.plugins` into
 your profile patch. dsh no longer reads the old `$DSH_HOME/.agent-presets/`
 directory, so an edited copy left there has no effect.
 
-### Prerequisite: a fetch provider
+### Fetching pages
 
-The preset mounts `tool-web` with `fetch: true`. dsh implements `web_fetch` in
-full but ships no fetch provider, so without one every fetch call fails and the
-researchers are capped at search snippets — which is worth considerably less
-than being able to open the page.
+The preset mounts `tool-web` with `fetch: true`, and on dsh 0.2 that works out of
+the box: `dsh-base` mounts `@deepseek-ai/dsh-web-fetch-http`, which registers an
+HTTP fetch provider that refuses non-public destinations. (On dsh 0.1 no
+provider shipped and every fetch call failed, capping the researchers at search
+snippets — which is worth considerably less than being able to open the page.)
 
-[`@creait/dsh-web-fetch`](../web-fetch) is that provider:
+[`@creait/dsh-web-fetch`](../web-fetch) remains an option when you want the
+guarded local provider instead of the built-in one:
 
 ```yaml
 - id: web
@@ -94,7 +96,8 @@ than being able to open the page.
       name: '@creait/dsh-web-fetch'
 ```
 
-If you are knowingly running without one, set `fetch: false` in the preset.
+If you are knowingly running without any fetch provider, set `fetch: false` in
+the preset.
 
 The preset also raises `fetchMaxOutputChars` from its 200,000 default to 400,000.
 `tool-web` applies that cap to the *source* before turndown converts it, not to

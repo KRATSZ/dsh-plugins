@@ -4,8 +4,8 @@
 # which dsh no longer reads. The declaration takes the id from the directory
 # name, the display fields from the old `preset.yml`, and the plugin entry list
 # from the old `agent.cordis.yml` verbatim — with one rename: the workflow
-# provider is now `dsh-workflow-ptc` (over `dsh-ptc-runtime-node`), since
-# `dsh-workflow-worker-thread` was removed from the harness.
+# provider is now `dsh-workflow-ptc`, since `dsh-workflow-worker-thread` was
+# removed from the harness.
 #
 # Edits saved from the Web editor override this row's `config.plugins` by id
 # from the profile patch.
@@ -52,7 +52,11 @@
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
-              text: >-
+              # `prefix`, not the old `text`: dsh 0.2 split the persona into a
+              # required `prefix` section and an optional `suffix`, and the old
+              # field name now fails schema validation — which rejects the whole
+              # preset mount, so the mode vanishes from the picker.
+              prefix: >-
                 You are a research agent powered by the {{model}} model, working in {{cwd}}.
 
                 Your job is to produce research someone can act on, and the standard for
@@ -111,13 +115,17 @@
             isolate:
               workflowEngine: true
             config:
-              # The workflow provider. `dsh-workflow-worker-thread` was removed from
-              # the harness; the engine is now `dsh-workflow-ptc`, which injects
-              # `ptcRuntime` and therefore needs the runtime row beside it. Config
-              # fields otherwise carry over unchanged (`provider`, `maxTotalAgents`).
-              - id: ptc-runtime
-                name: '@deepseek-ai/dsh-ptc-runtime-node'
-
+              # The workflow engine. `dsh-workflow-worker-thread` was removed from
+              # the harness; the engine is now `dsh-workflow-ptc`. `provider` and
+              # `maxTotalAgents` carry over unchanged — both are still Config fields.
+              #
+              # `dsh-ptc-runtime-node` is deliberately NOT mounted here, and that is
+              # load-bearing: it PROVIDES `ptcRuntime`, while this group's realm
+              # isolates only `workflowEngine`. A service provider inside a realm
+              # that does not isolate its own service publishes process-globally,
+              # and `dsh-agent-presets` then rejects the whole mount — the mode
+              # simply never appears in the picker. The runtime is a host-plane row
+              # (mounted by dsh-base) and is inherited into this realm.
               - id: workflow-ptc
                 name: '@deepseek-ai/dsh-workflow-ptc'
                 config:

@@ -147,11 +147,15 @@ describe('the agent half', () => {
 		assert.match(group, /name: cordis:group/);
 		assert.match(group, /isolate:\n\s+workflowEngine: true/);
 		// The engine moved: `dsh-workflow-worker-thread` was removed from the
-		// harness, and `dsh-workflow-ptc` injects `ptcRuntime`, so the runtime row
-		// has to be inside the same realm beside it.
-		assert.match(group, /name: '@deepseek-ai\/dsh-ptc-runtime-node'/);
+		// harness and `dsh-workflow-ptc` replaces it.
 		assert.match(group, /name: '@deepseek-ai\/dsh-workflow-ptc'/);
 		assert.doesNotMatch(group, /name: '@deepseek-ai\/dsh-workflow-worker-thread'/);
+		// And the PTC runtime must NOT be mounted here. It PROVIDES `ptcRuntime`,
+		// while this realm isolates only `workflowEngine`; a provider inside a
+		// realm that does not isolate its own service publishes process-globally,
+		// `dsh-agent-presets` rejects the whole mount, and the mode disappears
+		// from the picker with nothing in the log. It is a host-plane row.
+		assert.doesNotMatch(group, /name: '@deepseek-ai\/dsh-ptc-runtime-node'/);
 		assert.match(group, /name: '@creait\/dsh-research-mode\/tool'/);
 	});
 
@@ -219,6 +223,17 @@ describe('the preset', () => {
 			const cjk = text.match(/[　-〿぀-ヿ一-鿿＀-￯]/g) ?? [];
 			assert.deepEqual(cjk, [], `${label} carries CJK: ${cjk.join('')}`);
 		}
+	});
+
+	// dsh 0.2 split the persona into a REQUIRED `prefix` and an optional
+	// `suffix`. The pre-0.2 `text` field now fails schema validation, and a
+	// preset whose child rejects its config is reported broken by the registry —
+	// the mode then never reaches the picker, with nothing on stderr and the
+	// bundle still listed as installed.
+	it('addresses the persona by prefix, the field dsh 0.2 requires', () => {
+		const persona = preset.slice(preset.indexOf('- id: persona'), preset.indexOf('- id: agent-instructions'));
+		assert.match(persona, /^\s+prefix: /m);
+		assert.doesNotMatch(persona, /^\s+text: /m);
 	});
 
 	// dsh no longer reads `$DSH_HOME/.agent-presets`, so the preset has to reach
